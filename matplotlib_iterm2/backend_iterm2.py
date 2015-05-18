@@ -1,15 +1,15 @@
-"""iTerm2 exterimental backend.
+"""iTerm2 exterimental backend for matplotlib.
 
 Based on iTerm2 nightly build feature - displaying images in terminal.
 http://iterm2.com/images.html#/section/home
 
 Example:
 
-    import matplotlib
-    matplotlib.use('xxx')
-    from pylab import *
-    plot([1,2,3])
-    show()
+import matplotlib
+matplotlib.use('xxx')
+from pylab import *
+plot([1,2,3])
+show()
 """
 
 __author__ = 'Oleg Selivanov <oleg.a.selivanov@gmail.com>'
@@ -18,6 +18,7 @@ import os
 import subprocess
 import tempfile
 
+import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib._pylab_helpers import Gcf
 from matplotlib.backend_bases import FigureManagerBase
@@ -47,10 +48,14 @@ class FigureManagerTemplate(FigureManagerBase):
     def show(self):
         canvas = self.canvas
         canvas.draw()
-        buf = canvas.buffer_rgba(0, 0)
+
+        if matplotlib.__version__ < '1.2':
+            buf = canvas.buffer_rgba(0, 0)
+        else:
+            buf = canvas.buffer_rgba()
+
         render = canvas.get_renderer()
-        w = int(render.width)
-        h = int(render.height)
+        w, h = int(render.width), int(render.height)
         im = Image.frombuffer('RGBA', (w, h), buf, 'raw', 'RGBA', 0, 1)
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
             im.save(f.name)
