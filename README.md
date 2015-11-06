@@ -28,7 +28,15 @@ user profile.
     c.TerminalIPythonApp.pylab = 'iterm2'
     ```
 
+*Note*: After the installation, on startup python will show you something like:
+ 
+    [TerminalIPythonApp] WARNING | GUI event loop or pylab initialization failed
+    UsageError: Invalid GUI request 'iterm2', valid ones are:['osx', 'qt4', 'glut', 'gtk3', None, 'pyglet', 'wx', 'none', 'qt', 'gtk', 'tk']
+
+That's fine, it'll work anyway.
+
 ## TODO
 
  - Use less hacky approach to enable matplotlib_iterm2 in ipython.
  - Write directly to terminal instead of using imgcat.
+ - Do something w/ warnings on startup.
