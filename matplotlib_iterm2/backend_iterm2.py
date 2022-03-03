@@ -57,10 +57,19 @@ class FigureManagerTemplate(FigureManagerBase):
         render = canvas.get_renderer()
         w, h = int(render.width), int(render.height)
         im = Image.frombuffer('RGBA', (w, h), buf, 'raw', 'RGBA', 0, 1)
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=True) as f:
             im.save(f.name)
-            subprocess.call(['imgcat', f.name])
-            os.unlink(f.name)
+            # Subprocess compatible with both ipython and jupyter console. See:
+            # https://github.com/ipython/ipykernel/issues/310
+            # https://github.com/oselivanov/matplotlib_iterm2/issues/3
+            with subprocess.Popen(
+                ['imgcat', f.name],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                close_fds=True,
+            ) as process:
+                for line in iter(process.stdout.readline, b""):
+                    print(line.rstrip().decode("utf-8"))
 
 
 FigureManager = FigureManagerBase
