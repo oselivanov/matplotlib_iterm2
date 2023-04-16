@@ -1,15 +1,6 @@
-"""iTerm2 exterimental backend for matplotlib.
-
-Based on iTerm2 nightly build feature - displaying images in terminal.
-http://iterm2.com/images.html#/section/home
-
-Example:
-
-import matplotlib
-matplotlib.use('xxx')
-from pylab import *
-plot([1,2,3])
-show()
+"""
+iTerm2 experimental backend for matplotlib. Based on iTerm2 nightly build feature
+for displaying images in the terminal: http://iterm2.com/images.html#/section/home
 """
 
 __author__ = 'Oleg Selivanov <oleg.a.selivanov@gmail.com>'
@@ -31,7 +22,7 @@ except ImportError:
 
 # TODO(oleg): Show better message if PIL/Pillow is not installed.
 # TODO(oleg): Check if imgcat script exists.
-# TODO(lukelbd): Add CLOSE as configurable setting
+# TODO(lukelbd): Turn CLOSE into configurable setting.
 CLOSE = True
 
 
@@ -108,37 +99,35 @@ def show():
 
 
 class FigureCanvas(FigureCanvasAgg):
-    # Figure canvas required for pyplot backends in matplotlib > 3.6
+    # Figure canvas required for pyplot backends in matplotlib > 3.6.
     required_interactive_framework = None
 
 
 class FigureManagerInline(FigureManagerBase):
+    # Manager that prints using subprocess compatible with ipython and jupyter console.
+    # https://github.com/ipython/ipykernel/issues/310
+    # https://github.com/oselivanov/matplotlib_iterm2/issues/3
     def show(self):
         canvas = self.canvas
         canvas.draw()
-
         if matplotlib.__version__ < '1.2':
             buf = canvas.buffer_rgba(0, 0)
         else:
             buf = canvas.buffer_rgba()
-
         render = canvas.get_renderer()
-        w, h = int(render.width), int(render.height)
-        im = Image.frombuffer('RGBA', (w, h), buf, 'raw', 'RGBA', 0, 1)
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=True) as f:
-            im.save(f.name)
-            # Subprocess compatible with both ipython and jupyter console. See:
-            # https://github.com/ipython/ipykernel/issues/310
-            # https://github.com/oselivanov/matplotlib_iterm2/issues/3
+        dims = (int(render.width), int(render.height))
+        image = Image.frombuffer('RGBA', dims, buf, 'raw', 'RGBA', 0, 1)
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=True) as temp:
+            image.save(temp.name)
             with subprocess.Popen(
-                ['imgcat', f.name],
+                ['imgcat', temp.name],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 close_fds=True,
             ) as process:
                 print('')  # required to avoid indenting jupyter-vim figures
-                for line in iter(process.stdout.readline, b""):
-                    print(line.rstrip().decode("utf-8"))
+                for line in iter(process.stdout.readline, b''):
+                    print(line.rstrip().decode('utf-8'))
 
 
 # Use default figure manager
