@@ -5,6 +5,8 @@ for displaying images in the terminal: http://iterm2.com/images.html#/section/ho
 
 __author__ = 'Oleg Selivanov <oleg.a.selivanov@gmail.com>'
 
+import os
+import shutil
 import subprocess
 import tempfile
 
@@ -13,17 +15,36 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib._pylab_helpers import Gcf
 from matplotlib.backend_bases import FigureManagerBase
 from matplotlib.figure import Figure
-from PIL import Image
+
+# Whether to close figures
+# TODO: Make this configurable
+CLOSE = True
 
 try:
     from IPython import get_ipython
 except ImportError:
     get_ipython = lambda: None
 
-# TODO(oleg): Show better message if PIL/Pillow is not installed.
-# TODO(oleg): Check if imgcat script exists.
-# TODO(lukelbd): Turn CLOSE into configurable setting.
-CLOSE = True
+try:
+    from PIL import Image
+except ImportError:
+    raise RuntimeError("Package 'pillow' is required for matplotlib_iterm2 backend.")
+
+if 'TERM_PROGRAM' in os.environ:
+    terminal = os.environ['TERM_PROGRAM']
+else:
+    terminal = 'unknown'
+
+if 'iTerm' not in terminal:
+    raise RuntimeError(
+        'Current terminal {!r} is not compatible with matplotlib_iterm2 backend. '
+        "Please use 'iTerm' instead: http://iterm.com".format(terminal)
+    )
+if not shutil.which('imgcat'):
+    raise RuntimeError(
+        "iTerm2 executable 'imgcat' not found in $PATH. For install "
+        'instructions see: https://iterm2.com/documentation-images.html'
+    )
 
 
 def _draw_output(output):
