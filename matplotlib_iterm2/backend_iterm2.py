@@ -93,7 +93,7 @@ def new_figure_manager(num, *args, **kwargs):
     # Generate instance of manager subclass
     cls = kwargs.pop('FigureClass', Figure)
     fig = cls(*args, **kwargs)
-    canvas = FigureCanvasAgg(fig)
+    canvas = FigureCanvas(fig)
     return FigureManagerInline(canvas, num)
 
 
@@ -105,6 +105,11 @@ def show():
     finally:
         if CLOSE:
             matplotlib.pyplot.close('all')
+
+
+class FigureCanvas(FigureCanvasAgg):
+    # Figure canvas required for pyplot backends in matplotlib > 3.6
+    required_interactive_framework = None
 
 
 class FigureManagerInline(FigureManagerBase):
